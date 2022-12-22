@@ -1,4 +1,4 @@
-Q1)Compile java graal into executable files
+
 
 Ans->To compile a Java program that uses the GraalVM into an executable file, you can use the native-image tool that is included with the GraalVM distribution.
 
@@ -21,7 +21,7 @@ native-image Main
 
 This will create an executable file called main in the current directory. You can then run the executable file by typing ./main.
 
-Q2)About test containers for java
+
 
 Ans->TestContainers is a Java library that allows you to run tests in a containerized environment, such as a Docker container. 
 The main advantage of using TestContainers is that it allows you to run tests against a real instance of a service, such as a 
@@ -37,53 +37,19 @@ Application integration tests: for running your application in a short-lived tes
 
 UI/Acceptance tests: use containerized web browsers, compatible with Selenium, for conducting automated UI tests. 
 
-Q3)write a spring boot application.
+
 
 Ans->package com.redcarpet;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-public class HelloController {
-
-    @RequestMapping("/")
-    String hello() {
-        return "Hello World";
-    }
-
-}
--->Create a @SpringBootApplication annotated class
-
-@SpringBootApplication
-public class RedCarpet {
-
-    public static void main(String[] args) {
-        SpringApplication.run(RedCarpet.class, args);
-    }
-
-}
-Output:Hello World
-
-Q4)connect this spring boot application to a database using testcontainers
-
-Ans->Use the dependencies first:
-
-<dependency>
-    <groupId>org.testcontainers</groupId>
-    <artifactId>postgresql</artifactId>
-    <version>1.17.3</version>
-    <scope>test</scope>
-</dependency>
-
-Create a Testcontainers DatabaseContainer for the database that you want to use. Here i am using MYSQL
 //CODE
 public static MySQLContainer mysql = new MySQLContainer("mysql:8.0.22")
     .withDatabaseName("MYSQL")
     .withUsername("redcarpet")
     .withPassword("redcarpet@123");
  
-Configure your Spring Boot application to connect to the Testcontainers database. 
+
 
 Set the MYSQL_HOSTNAME, MYSQL_PORT, MYSQL_DATABASE, MYSQL_USERNAME, and MYSQL_PASSWORD
 environment variables to the values provided by the Testcontainers MySQLContainer
@@ -95,7 +61,7 @@ System.setProperty("MYSQL_DATABASE", mysql.getDatabaseName());
 System.setProperty("MYSQL_USERNAME", mysql.getUsername());
 System.setProperty("MYSQL_PASSWORD", mysql.getPassword());
 
-Q5) write a terraform script to deploy this spring boot application to AWS Lambda
+
 //CODE
 # Configure the AWS provider
 provider "aws" {

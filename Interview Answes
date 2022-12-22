@@ -1,0 +1,188 @@
+Q1)Compile java graal into executable files
+
+Ans->To compile a Java program that uses the GraalVM into an executable file, you can use the native-image tool that is included with the GraalVM distribution.
+
+Here is an example of how you can use native-image to compile a Java program into an executable file:
+
+Write your Java program and make sure it compiles and runs correctly.
+
+Install the GraalVM on your system, if you haven't already.
+
+Set the JAVA_HOME environment variable to the directory where the GraalVM is installed.
+
+Open a terminal and navigate to the directory where your Java program is located.
+
+Use the javac command to compile your Java program into class files. For example:
+javac Main.java
+
+Use the native-image command to compile the class files into an executable file. For example:
+
+native-image Main
+
+This will create an executable file called main in the current directory. You can then run the executable file by typing ./main.
+
+Q2)About test containers for java
+
+Ans->TestContainers is a Java library that allows you to run tests in a containerized environment, such as a Docker container. 
+The main advantage of using TestContainers is that it allows you to run tests against a real instance of a service, such as a 
+database, rather than using a mock or stub.
+
+Testcontainers make the following kinds of tests easier:
+
+Data access layer integration tests: Use a containerized instance of a MySQL, PostgreSQL or Oracle database to test your data access
+layer code for complete compatibility, but without requiring complex setup on developers' machines and safe in the knowledge that
+your tests will always start with a known DB state. Any other database type that can be containerized can also be used.
+
+Application integration tests: for running your application in a short-lived test mode with dependencies, such as databases, message queues or web servers.
+
+UI/Acceptance tests: use containerized web browsers, compatible with Selenium, for conducting automated UI tests. 
+
+Q3)write a spring boot application.
+
+Ans->package com.redcarpet;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloController {
+
+    @RequestMapping("/")
+    String hello() {
+        return "Hello World";
+    }
+
+}
+-->Create a @SpringBootApplication annotated class
+
+@SpringBootApplication
+public class RedCarpet {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RedCarpet.class, args);
+    }
+
+}
+Output:Hello World
+
+Q4)connect this spring boot application to a database using testcontainers
+
+Ans->Use the dependencies first:
+
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>1.17.3</version>
+    <scope>test</scope>
+</dependency>
+
+Create a Testcontainers DatabaseContainer for the database that you want to use. Here i am using MYSQL
+//CODE
+public static MySQLContainer mysql = new MySQLContainer("mysql:8.0.22")
+    .withDatabaseName("MYSQL")
+    .withUsername("redcarpet")
+    .withPassword("redcarpet@123");
+ 
+Configure your Spring Boot application to connect to the Testcontainers database. 
+
+Set the MYSQL_HOSTNAME, MYSQL_PORT, MYSQL_DATABASE, MYSQL_USERNAME, and MYSQL_PASSWORD
+environment variables to the values provided by the Testcontainers MySQLContainer
+
+//CODE
+System.setProperty("MYSQL_HOSTNAME", mysql.getHost());
+System.setProperty("MYSQL_PORT", mysql.getFirstMappedPort().toString());
+System.setProperty("MYSQL_DATABASE", mysql.getDatabaseName());
+System.setProperty("MYSQL_USERNAME", mysql.getUsername());
+System.setProperty("MYSQL_PASSWORD", mysql.getPassword());
+
+Q5) write a terraform script to deploy this spring boot application to AWS Lambda
+//CODE
+# Configure the AWS provider
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Create an S3 bucket for storing the application package
+resource "aws_s3_bucket" "lambda_package_bucket" {
+  bucket = "lambda-package-bucket"
+  acl    = "private"
+}
+
+# Create an IAM role for the Lambda function
+resource "aws_iam_role" "lambda_exec_role" {
+  name = "lambda_exec_role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+# Attach the necessary permissions to the IAM role
+resource "aws_iam_policy" "lambda_exec_policy" {
+  name = "lambda_exec_policy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.lambda_package_bucket.arn}/*"
+      ],
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_exec_policy_attachment" {
+  role       = "${aws_iam_role.lambda_exec_role.name}"
+  policy_arn = "${aws_iam_policy.lambda_exec_policy.arn}"
+}
+
+# Upload the application package to S3
+resource "aws_s3_bucket_object" "lambda_package" {
+  bucket = "${aws_s3_bucket.lambda_package_bucket.id}"
+  key    = "lambda.jar"
+  source = "path/to/lambda.jar"
+}
+
+# Create the Lambda function
+resource "aws_lambda_function" "lambda_function" {
+  function_name = "lambda_function"
+  runtime       = "java8"
+  role          = "${aws_iam_role.lambda_exec_role.arn}"
+  handler       = "com.example.LambdaHandler::handleRequest"
+  source_code_hash = "${base64sha256(file("path/to/lambda.jar"))}"
+  memory_size   = 512
+  timeout       = 30
+
+  environment {
+    variables = {
+      "DB_HOST" = "example.com"
+      "DB
